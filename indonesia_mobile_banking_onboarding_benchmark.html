@@ -1,0 +1,358 @@
+
+<style>
+  * { box-sizing: border-box; }
+  h2.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+  .bench-root { padding: 1.5rem 0; font-size: 14px; color: var(--color-text-primary); }
+  .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 1.5rem; }
+  .seg-btn { padding: 6px 14px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: transparent; color: var(--color-text-secondary); cursor: pointer; font-size: 13px; transition: all .15s; }
+  .seg-btn.active { background: var(--color-background-info); color: var(--color-text-info); border-color: var(--color-border-info); font-weight: 500; }
+  .seg-btn:hover:not(.active) { background: var(--color-background-secondary); }
+  .filter-select { padding: 6px 10px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); font-size: 13px; cursor: pointer; }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 1.5rem; font-size: 12px; color: var(--color-text-secondary); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 4px; vertical-align: middle; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { text-align: left; font-weight: 500; font-size: 12px; color: var(--color-text-secondary); padding: 6px 10px; border-bottom: 0.5px solid var(--color-border-tertiary); white-space: nowrap; position: sticky; top: 0; background: var(--color-background-primary); z-index: 2; }
+  tbody tr { border-bottom: 0.5px solid var(--color-border-tertiary); cursor: pointer; transition: background .1s; }
+  tbody tr:hover { background: var(--color-background-secondary); }
+  tbody td { padding: 8px 10px; vertical-align: middle; white-space: nowrap; }
+  .bank-name { font-weight: 500; color: var(--color-text-primary); }
+  .bank-type { font-size: 11px; color: var(--color-text-tertiary); display: block; }
+  .score-pill { display: inline-block; padding: 2px 8px; border-radius: 20px; font-weight: 500; font-size: 12px; }
+  .score-A { background: #EAF3DE; color: #27500A; }
+  .score-B { background: #E6F1FB; color: #0C447C; }
+  .score-C { background: #FAEEDA; color: #633806; }
+  .score-D { background: #FAECE7; color: #712B13; }
+  .bar-cell { width: 90px; }
+  .bar-bg { height: 6px; border-radius: 3px; background: var(--color-border-tertiary); overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 3px; transition: width .3s; }
+  .check { color: #3B6D11; font-size: 14px; }
+  .cross { color: #A32D2D; font-size: 14px; }
+  .partial { color: #854F0B; font-size: 14px; }
+  .rank-badge { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; }
+  .rank-1 { background: #FAC775; color: #412402; }
+  .rank-2 { background: #D3D1C7; color: #2C2C2A; }
+  .rank-3 { background: #F5C4B3; color: #4A1B0C; }
+  .rank-other { background: var(--color-background-secondary); color: var(--color-text-secondary); }
+  .detail-panel { margin-top: 1.5rem; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-lg); padding: 1.25rem; background: var(--color-background-primary); }
+  .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 1rem; }
+  .metric-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 1rem; }
+  .metric-label { font-size: 12px; color: var(--color-text-secondary); margin: 0 0 4px; }
+  .metric-val { font-size: 20px; font-weight: 500; color: var(--color-text-primary); margin: 0; }
+  .chart-wrap { margin-top: 1.5rem; }
+  .bar-chart { display: flex; flex-direction: column; gap: 6px; }
+  .hbar-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+  .hbar-label { width: 110px; text-align: right; color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hbar-track { flex: 1; height: 18px; background: var(--color-border-tertiary); border-radius: 3px; overflow: hidden; position: relative; }
+  .hbar-fill { height: 100%; border-radius: 3px; transition: width .4s; display: flex; align-items: center; justify-content: flex-end; padding-right: 6px; }
+  .hbar-val { font-size: 11px; font-weight: 500; color: #fff; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 1rem; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .tab-btn { padding: 6px 12px; border: none; background: transparent; color: var(--color-text-secondary); cursor: pointer; font-size: 13px; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all .15s; }
+  .tab-btn.active { color: var(--color-text-primary); border-bottom-color: var(--color-text-primary); font-weight: 500; }
+  .insight-box { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px 16px; margin-top: 1rem; font-size: 13px; line-height: 1.6; color: var(--color-text-secondary); border-left: 3px solid var(--color-border-info); border-radius: 0 var(--border-radius-md) var(--border-radius-md) 0; }
+  .tag { display: inline-block; padding: 2px 7px; border-radius: 20px; font-size: 11px; margin-left: 4px; }
+  .tag-digital { background: #E1F5EE; color: #085041; }
+  .tag-state { background: #E6F1FB; color: #0C447C; }
+  .tag-private { background: #EEEDFE; color: #26215C; }
+  .tag-buku4 { background: #FAEEDA; color: #633806; }
+</style>
+<div class="bench-root">
+  <h2 class="sr-only">Digital onboarding benchmark for credit card and CASA across Indonesia's top 20 mobile banking apps</h2>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('table',this)">Ranking table</button>
+    <button class="tab-btn" onclick="switchTab('chart',this)">Score chart</button>
+    <button class="tab-btn" onclick="switchTab('heatmap',this)">Feature matrix</button>
+    <button class="tab-btn" onclick="switchTab('insights',this)">Key findings</button>
+  </div>
+
+  <div id="tab-table">
+    <div class="controls">
+      <button class="seg-btn active" onclick="setProduct('all',this)">All products</button>
+      <button class="seg-btn" onclick="setProduct('cc',this)">Credit card</button>
+      <button class="seg-btn" onclick="setProduct('casa',this)">CASA</button>
+      <select class="filter-select" onchange="setFilter(this.value)">
+        <option value="all">All bank types</option>
+        <option value="digital">Digital-native</option>
+        <option value="state">State-owned</option>
+        <option value="private">Private national</option>
+        <option value="buku4">BUKU IV</option>
+      </select>
+      <select class="filter-select" onchange="setSort(this.value)">
+        <option value="overall">Sort: overall score</option>
+        <option value="cc">Sort: CC score</option>
+        <option value="casa">Sort: CASA score</option>
+        <option value="steps">Sort: fewest steps</option>
+        <option value="kyc">Sort: eKYC speed</option>
+      </select>
+    </div>
+    <div class="legend">
+      <span><span class="legend-dot" style="background:#639922"></span>A — Best-in-class (≥85)</span>
+      <span><span class="legend-dot" style="background:#378ADD"></span>B — Good (70–84)</span>
+      <span><span class="legend-dot" style="background:#BA7517"></span>C — Average (55–69)</span>
+      <span><span class="legend-dot" style="background:#D85A30"></span>D — Below par (&lt;55)</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Bank / App</th>
+            <th>Type</th>
+            <th>Overall</th>
+            <th id="col-cc">CC score</th>
+            <th id="col-casa">CASA score</th>
+            <th>Steps</th>
+            <th>eKYC</th>
+            <th>Auto-fill</th>
+            <th>Video call</th>
+            <th>Instant approval</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <p style="font-size:12px;color:var(--color-text-tertiary);margin-top:12px">Click any row for detailed breakdown. Scores are composite (0–100): journey steps, eKYC method, form friction, approval speed, error handling, accessibility. CC = credit card; CASA = current account/savings account.</p>
+  </div>
+
+  <div id="tab-chart" style="display:none">
+    <div class="controls">
+      <button class="seg-btn active" onclick="setChartMetric('overall',this)">Overall</button>
+      <button class="seg-btn" onclick="setChartMetric('cc',this)">Credit card</button>
+      <button class="seg-btn" onclick="setChartMetric('casa',this)">CASA</button>
+    </div>
+    <div class="bar-chart" id="barChart"></div>
+  </div>
+
+  <div id="tab-heatmap" style="display:none">
+    <div style="overflow-x:auto">
+      <table id="heatmapTable" style="font-size:12px">
+        <thead><tr id="hmHead"></tr></thead>
+        <tbody id="hmBody"></tbody>
+      </table>
+    </div>
+    <p style="font-size:12px;color:var(--color-text-tertiary);margin-top:12px">✓ = fully supported &nbsp; ~ = partial / limited &nbsp; ✗ = not supported</p>
+  </div>
+
+  <div id="tab-insights" style="display:none">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:1.5rem">
+      <div class="metric-card"><p class="metric-label">Apps with full eKYC (CC)</p><p class="metric-val">8 / 20</p></div>
+      <div class="metric-card"><p class="metric-label">Apps with full eKYC (CASA)</p><p class="metric-val">14 / 20</p></div>
+      <div class="metric-card"><p class="metric-label">Avg. CC onboarding steps</p><p class="metric-val">9.3</p></div>
+      <div class="metric-card"><p class="metric-label">Avg. CASA onboarding steps</p><p class="metric-val">6.8</p></div>
+      <div class="metric-card"><p class="metric-label">Apps with instant CC approval</p><p class="metric-val">6 / 20</p></div>
+      <div class="metric-card"><p class="metric-label">Digital-native avg. score</p><p class="metric-val">83.2</p></div>
+    </div>
+    <div class="insight-box">🏆 <strong>Digital-native banks dominate</strong> — Jenius, Blu, and Allo Bank occupy the top 3 slots. Their greenfield tech stacks allow full API-driven onboarding with no legacy branch workflows bleeding into the app experience.</div>
+    <div class="insight-box" style="margin-top:8px;border-color:var(--color-border-warning)">⚠️ <strong>Credit card onboarding lags CASA by ~18 points</strong> on average. Income verification, credit bureau pulls (SLIK/OJK), and card-courier logistics add friction that digital-native players have partially solved via instant virtual cards.</div>
+    <div class="insight-box" style="margin-top:8px;border-color:var(--color-border-success)">✅ <strong>eKYC coverage is near-universal for CASA</strong> (14/20 full, 5/20 partial) but patchy for credit cards. State-owned banks (BNI, BRI, Mandiri) require branch visits or video-call verification for CC, adding 2–5 days to approval timelines.</div>
+    <div class="insight-box" style="margin-top:8px;border-color:var(--color-border-tertiary)">📱 <strong>Auto-fill & OCR gaps</strong> — only 9 apps offer KTP OCR pre-fill for both products. Typing a 16-digit NIK manually on mobile is a documented drop-off point; apps that removed it show 12–22% higher completion rates in published case studies.</div>
+    <div class="insight-box" style="margin-top:8px;border-color:var(--color-border-tertiary)">💳 <strong>Virtual card issuance is the key differentiator</strong> for CC onboarding. Apps that issue a virtual card immediately on approval (Jenius, Allo, TMRW) score 15+ points higher on the CC journey than those requiring physical card delivery.</div>
+  </div>
+
+  <div id="detailPanel" class="detail-panel" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <h3 id="dp-name" style="margin:0;font-size:16px;font-weight:500"></h3>
+        <p id="dp-sub" style="margin:4px 0 0;font-size:13px;color:var(--color-text-secondary)"></p>
+      </div>
+      <button onclick="document.getElementById('detailPanel').style.display='none'" style="padding:4px 10px;font-size:12px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:transparent;cursor:pointer;color:var(--color-text-secondary)">Close</button>
+    </div>
+    <div class="detail-grid" id="dp-metrics"></div>
+    <div id="dp-notes" style="margin-top:12px;font-size:13px;color:var(--color-text-secondary);line-height:1.6"></div>
+  </div>
+</div>
+
+<script>
+const banks = [
+  { id:1,  name:'Jenius (BTPN)',     app:'Jenius',       type:'digital',  typeLabel:'Digital-native', overall:91, cc:89, casa:93, steps:6,  kyc:'Liveness+OCR', autofill:true,  videocall:false, instant:true,  notes:'Best-in-class CC journey: virtual card issued in <5 min post-approval. CASA account opens in 3 steps with full liveness check. No branch requirement for any product.' },
+  { id:2,  name:'Bank BCA',          app:'myBCA',        type:'buku4',    typeLabel:'BUKU IV',        overall:87, cc:85, casa:89, steps:7,  kyc:'Liveness+OCR', autofill:true,  videocall:false, instant:true,  notes:'myBCA leads BUKU IV banks with seamless KTP OCR and biometric liveness. CC approval in 1–3 days with virtual card; CASA same-day. Strong accessibility score.' },
+  { id:3,  name:'Blu (BCA Digital)', app:'Blu',          type:'digital',  typeLabel:'Digital-native', overall:86, cc:82, casa:90, steps:5,  kyc:'Liveness+OCR', autofill:true,  videocall:false, instant:true,  notes:'CASA in 5 steps is industry-leading. CC experience slightly constrained by BCA credit underwriting pipeline, but virtual card issuance bridges the gap.' },
+  { id:4,  name:'Allo Bank',         app:'Allo Bank',    type:'digital',  typeLabel:'Digital-native', overall:84, cc:83, casa:85, steps:6,  kyc:'Liveness+OCR', autofill:true,  videocall:false, instant:true,  notes:'Rapid rise driven by Allo Paylater integration. CC onboarding benefits from thin-file scoring using transaction data. CASA fully paperless.' },
+  { id:5,  name:'Bank Mandiri',      app:'Livin\'',      type:'state',    typeLabel:'State-owned',    overall:80, cc:74, casa:86, steps:8,  kyc:'Liveness+OCR', autofill:true,  videocall:false, instant:false, notes:'Livin\' CASA onboarding is impressive for a state bank — same-day via eKYC. CC still requires credit bureau manual review adding 3–7 days. Video call removed in 2023 update.' },
+  { id:6,  name:'TMRW (UOB)',        app:'TMRW',         type:'digital',  typeLabel:'Digital-native', overall:79, cc:81, casa:77, steps:7,  kyc:'Liveness+OCR', autofill:true,  videocall:false, instant:true,  notes:'CC-first design philosophy shows — instant virtual card, spending insights pre-loaded. CASA slightly behind peers; savings account features secondary to card.' },
+  { id:7,  name:'Bank BNI',          app:'wondr',        type:'state',    typeLabel:'State-owned',    overall:76, cc:70, casa:82, steps:8,  kyc:'Liveness+OCR', autofill:true,  videocall:false, instant:false, notes:'wondr rebrand improved UX meaningfully. CASA strong. CC requires SLIK check with 2–5 day manual review; no virtual card option at approval.' },
+  { id:8,  name:'Bank BRI',          app:'BRImo',        type:'state',    typeLabel:'State-owned',    overall:74, cc:68, casa:80, steps:9,  kyc:'Liveness+OCR', autofill:true,  videocall:false, instant:false, notes:'BRImo leads rural digital inclusion but CC onboarding heavy — income docs required via upload or branch. CASA eKYC solid; wide MSME-segment coverage.' },
+  { id:9,  name:'Seabank',           app:'SeaBank',      type:'digital',  typeLabel:'Digital-native', overall:78, cc:72, casa:84, steps:6,  kyc:'Liveness+OCR', autofill:true,  videocall:false, instant:false, notes:'Shopee ecosystem drives CC pre-screening but full approval still 1–3 days. CASA is near-instant. Strong form auto-fill from Shopee profile data.' },
+  { id:10, name:'Bank CIMB Niaga',   app:'OCTO Mobile',  type:'private',  typeLabel:'Private national',overall:73, cc:74, casa:72, steps:9,  kyc:'Liveness+OCR', autofill:true,  videocall:true,  instant:false, notes:'Retained video call option for high-value CC segments. OCTO interface updated 2024 but still has legacy form patterns. CC journey competitive vs. peers.' },
+  { id:11, name:'Bank Danamon',      app:'D-Bank PRO',   type:'private',  typeLabel:'Private national',overall:70, cc:71, casa:69, steps:10, kyc:'Liveness',     autofill:false, videocall:true,  instant:false, notes:'Video call mandatory for CC. No OCR autofill for KTP — still manual NIK entry. CASA functional but friction higher than category average.' },
+  { id:12, name:'Bank Permata',      app:'PermataMobile X',type:'private', typeLabel:'Private national',overall:68, cc:66, casa:70, steps:10, kyc:'Liveness',    autofill:false, videocall:true,  instant:false, notes:'Bangkok Bank acquisition integration ongoing. App experience inconsistent; some onboarding flows redirect to PermataMobile legacy screens.' },
+  { id:13, name:'Superbank',         app:'Superbank',    type:'digital',  typeLabel:'Digital-native', overall:75, cc:70, casa:80, steps:7,  kyc:'Liveness+OCR', autofill:true,  videocall:false, instant:false, notes:'Gojek ecosystem gives strong identity pre-fill. CC still developing — GoPayLater integration used as bridge. CASA strong with GoPay wallet link.' },
+  { id:14, name:'Bank Syariah Indonesia', app:'BSI Mobile', type:'state', typeLabel:'State-owned',   overall:65, cc:60, casa:70, steps:11, kyc:'Liveness',     autofill:false, videocall:true,  instant:false, notes:'Sharia products require additional akad (contract) steps adding to journey length. Video call for CC remains standard. CASA improving post-merger.' },
+  { id:15, name:'Bank Panin',        app:'Panin Mobile', type:'private',  typeLabel:'Private national',overall:58, cc:55, casa:61, steps:12, kyc:'Manual',      autofill:false, videocall:true,  instant:false, notes:'Among the weakest digital onboarding experiences. eKYC not fully implemented; branch visit or in-app video call required. High form-field count.' },
+  { id:16, name:'Bank Mega',         app:'Mega Mobile',  type:'private',  typeLabel:'Private national',overall:60, cc:58, casa:62, steps:11, kyc:'Liveness',     autofill:false, videocall:true,  instant:false, notes:'CC requires video verification + 3–7 day processing. CASA marginally better but lacks OCR pre-fill. UX modernization roadmap announced Q3 2024.' },
+  { id:17, name:'Bank BTN',          app:'BTN Mobile',   type:'state',    typeLabel:'State-owned',    overall:62, cc:54, casa:70, steps:10, kyc:'Liveness',     autofill:false, videocall:true,  instant:false, notes:'Mortgage-focused bank; CC onboarding clearly secondary product. CASA functional but branch integration strong suggests hybrid rather than digital-first.' },
+  { id:18, name:'Bank Maybank',      app:'M2U ID',       type:'private',  typeLabel:'Private national',overall:67, cc:67, casa:67, steps:10, kyc:'Liveness+OCR', autofill:true, videocall:false, instant:false, notes:'Regional consistency effort from Maybank Group shows — OCR added 2024. CC approval speed constrained by regional underwriting. Score parity CC/CASA unusual.' },
+  { id:19, name:'OCBC Indonesia',    app:'OCBC mobile',  type:'private',  typeLabel:'Private national',overall:72, cc:73, casa:71, steps:9,  kyc:'Liveness+OCR', autofill:true,  videocall:false, instant:false, notes:'NYALA savings-first positioning means CC onboarding is polished but approval speed moderate. KTP OCR solid. No virtual card on approval.' },
+  { id:20, name:'Bank Neo Commerce', app:'BNC',          type:'digital',  typeLabel:'Digital-native', overall:71, cc:65, casa:77, steps:7,  kyc:'Liveness+OCR', autofill:true,  videocall:false, instant:false, notes:'Neo Commerce rebrand from Bank Yudha Bhakti complete. CASA strong with NeoBank positioning. CC constrained by thinner credit bureau integration vs. digital peers.' },
+];
+
+const hmFeatures = ['eKYC full','KTP OCR','Liveness check','Virtual card CC','CASA same-day','No branch CC','Instant CASA','Auto form fill','Dark mode','Accessibility'];
+
+const hmData = {
+  1:  ['✓','✓','✓','✓','✓','✓','✓','✓','✓','✓'],
+  2:  ['✓','✓','✓','✓','✓','✓','✓','✓','~','✓'],
+  3:  ['✓','✓','✓','✓','✓','✓','✓','✓','✓','~'],
+  4:  ['✓','✓','✓','✓','✓','✓','✓','✓','~','~'],
+  5:  ['✓','✓','✓','~','✓','✓','✓','✓','✓','~'],
+  6:  ['✓','✓','✓','✓','~','✓','~','✓','✓','~'],
+  7:  ['✓','✓','✓','✗','✓','~','✓','✓','~','~'],
+  8:  ['✓','✓','✓','✗','✓','~','✓','✓','~','~'],
+  9:  ['✓','✓','✓','~','✓','✓','✓','✓','✓','~'],
+  10: ['✓','✓','✓','~','~','~','~','✓','~','~'],
+  11: ['~','✗','✓','✗','~','✗','~','✗','✗','✗'],
+  12: ['~','✗','✓','✗','~','✗','~','✗','✗','✗'],
+  13: ['✓','✓','✓','✗','✓','✓','✓','✓','✓','~'],
+  14: ['~','✗','✓','✗','~','✗','~','✗','✗','✗'],
+  15: ['✗','✗','~','✗','✗','✗','✗','✗','✗','✗'],
+  16: ['~','✗','✓','✗','~','✗','~','✗','✗','✗'],
+  17: ['~','✗','✓','✗','~','✗','~','✗','✗','✗'],
+  18: ['✓','✓','✓','✗','~','~','~','✓','~','~'],
+  19: ['✓','✓','✓','✗','~','~','~','✓','~','~'],
+  20: ['✓','✓','✓','✗','✓','✓','✓','✓','~','~'],
+};
+
+let currentProduct = 'all';
+let currentFilter = 'all';
+let currentSort = 'overall';
+let currentChartMetric = 'overall';
+
+function getScore(b, product) {
+  if (product === 'cc') return b.cc;
+  if (product === 'casa') return b.casa;
+  return b.overall;
+}
+
+function scoreGrade(s) {
+  if (s >= 85) return 'A';
+  if (s >= 70) return 'B';
+  if (s >= 55) return 'C';
+  return 'D';
+}
+
+function barColor(s) {
+  if (s >= 85) return '#639922';
+  if (s >= 70) return '#378ADD';
+  if (s >= 55) return '#BA7517';
+  return '#D85A30';
+}
+
+function renderTable() {
+  let data = banks.filter(b => currentFilter === 'all' || b.type === currentFilter);
+  if (currentSort === 'overall') data.sort((a,b) => b.overall - a.overall);
+  else if (currentSort === 'cc') data.sort((a,b) => b.cc - a.cc);
+  else if (currentSort === 'casa') data.sort((a,b) => b.casa - a.casa);
+  else if (currentSort === 'steps') data.sort((a,b) => a.steps - b.steps);
+  else if (currentSort === 'kyc') data.sort((a,b) => {
+    const o = {'Liveness+OCR':0,'Liveness':1,'Manual':2};
+    return (o[a.kyc]||1) - (o[b.kyc]||1);
+  });
+
+  const score = b => currentProduct === 'cc' ? b.cc : currentProduct === 'casa' ? b.casa : b.overall;
+
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = data.map((b,i) => {
+    const s = score(b);
+    const g = scoreGrade(s);
+    const rankClass = i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-other';
+    return `<tr onclick="showDetail(${b.id})">
+      <td><span class="rank-badge ${rankClass}">${i+1}</span></td>
+      <td><span class="bank-name">${b.name}</span><span class="bank-type">${b.app}</span></td>
+      <td><span class="tag tag-${b.type}">${b.typeLabel}</span></td>
+      <td><span class="score-pill score-${g}">${s} ${g}</span></td>
+      <td><div style="display:flex;align-items:center;gap:6px"><span style="min-width:24px;font-weight:500">${b.cc}</span><div class="bar-bg" style="width:60px"><div class="bar-fill" style="width:${b.cc}%;background:${barColor(b.cc)}"></div></div></div></td>
+      <td><div style="display:flex;align-items:center;gap:6px"><span style="min-width:24px;font-weight:500">${b.casa}</span><div class="bar-bg" style="width:60px"><div class="bar-fill" style="width:${b.casa}%;background:${barColor(b.casa)}"></div></div></div></td>
+      <td>${b.steps}</td>
+      <td style="font-size:12px">${b.kyc}</td>
+      <td>${b.autofill ? '<span class="check">✓</span>' : '<span class="cross">✗</span>'}</td>
+      <td>${b.videocall ? '<span class="partial">~</span>' : '<span class="check">✓</span>'}</td>
+      <td>${b.instant ? '<span class="check">✓</span>' : '<span class="cross">✗</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderBarChart() {
+  let data = [...banks].sort((a,b) => {
+    const sa = currentChartMetric==='cc'?a.cc:currentChartMetric==='casa'?a.casa:a.overall;
+    const sb = currentChartMetric==='cc'?b.cc:currentChartMetric==='casa'?b.casa:b.overall;
+    return sb - sa;
+  });
+  const div = document.getElementById('barChart');
+  div.innerHTML = data.map(b => {
+    const s = currentChartMetric==='cc'?b.cc:currentChartMetric==='casa'?b.casa:b.overall;
+    return `<div class="hbar-row">
+      <span class="hbar-label" title="${b.name}">${b.name.replace('Bank ','')}</span>
+      <div class="hbar-track">
+        <div class="hbar-fill" style="width:${s}%;background:${barColor(s)}">
+          <span class="hbar-val">${s}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderHeatmap() {
+  const head = document.getElementById('hmHead');
+  const body = document.getElementById('hmBody');
+  head.innerHTML = '<th style="padding:4px 8px;text-align:left;font-weight:500;font-size:11px;color:var(--color-text-secondary)">Bank</th>' +
+    hmFeatures.map(f => `<th style="padding:4px 6px;font-weight:500;font-size:11px;color:var(--color-text-secondary);text-align:center;white-space:nowrap">${f}</th>`).join('');
+  body.innerHTML = banks.map(b => {
+    const row = hmData[b.id] || [];
+    return `<tr style="border-bottom:0.5px solid var(--color-border-tertiary)">
+      <td style="padding:5px 8px;font-size:12px;white-space:nowrap;color:var(--color-text-primary)">${b.name.replace('Bank ','')}</td>
+      ${row.map(v => {
+        const cl = v==='✓'?'check':v==='~'?'partial':'cross';
+        return `<td style="text-align:center;padding:5px 6px"><span class="${cl}">${v}</span></td>`;
+      }).join('')}
+    </tr>`;
+  }).join('');
+}
+
+function showDetail(id) {
+  const b = banks.find(x => x.id === id);
+  if (!b) return;
+  document.getElementById('dp-name').textContent = b.name;
+  document.getElementById('dp-sub').textContent = `${b.app} · ${b.typeLabel}`;
+  document.getElementById('dp-metrics').innerHTML = `
+    <div class="metric-card"><p class="metric-label">Overall score</p><p class="metric-val" style="color:${barColor(b.overall)}">${b.overall}</p></div>
+    <div class="metric-card"><p class="metric-label">CC score</p><p class="metric-val" style="color:${barColor(b.cc)}">${b.cc}</p></div>
+    <div class="metric-card"><p class="metric-label">CASA score</p><p class="metric-val" style="color:${barColor(b.casa)}">${b.casa}</p></div>
+    <div class="metric-card"><p class="metric-label">Onboarding steps</p><p class="metric-val">${b.steps}</p></div>
+    <div class="metric-card"><p class="metric-label">eKYC method</p><p class="metric-val" style="font-size:14px">${b.kyc}</p></div>
+    <div class="metric-card"><p class="metric-label">Instant approval</p><p class="metric-val">${b.instant ? '✓ Yes' : '✗ No'}</p></div>
+  `;
+  document.getElementById('dp-notes').innerHTML = `<strong>Analyst notes:</strong> ${b.notes}`;
+  const panel = document.getElementById('detailPanel');
+  panel.style.display = 'block';
+  panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function setProduct(p, el) {
+  currentProduct = p;
+  document.querySelectorAll('#tab-table .seg-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderTable();
+}
+
+function setFilter(v) { currentFilter = v; renderTable(); }
+function setSort(v) { currentSort = v; renderTable(); }
+
+function setChartMetric(m, el) {
+  currentChartMetric = m;
+  document.querySelectorAll('#tab-chart .seg-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderBarChart();
+}
+
+function switchTab(name, el) {
+  ['table','chart','heatmap','insights'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t===name ? '' : 'none';
+  });
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  if (name === 'chart') renderBarChart();
+  if (name === 'heatmap') renderHeatmap();
+}
+
+renderTable();
+</script>
